@@ -1,0 +1,11 @@
+.webcam-feed {
+  border-radius: 10px; /* Adjust the value to control the roundness */
+}
+
+*{
+  background-color: black;
+}
+
+h1{
+  color: white;
+}

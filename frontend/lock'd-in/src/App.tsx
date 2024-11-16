@@ -1,6 +1,7 @@
 // App.tsx
 import React from "react";
 import WebcamComponent from "./components/Webcam";
+import "./index.css";
 
 function App() {
   const webcamProps = {
