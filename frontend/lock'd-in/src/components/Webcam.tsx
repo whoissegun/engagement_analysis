@@ -1,28 +1,21 @@
-import React, { useRef } from "react";
-import Webcam from "react-webcam";
+// WebcamComponent.tsx
+import React, { forwardRef } from "react";
+import Webcam, { WebcamProps } from "react-webcam";
 
-interface Props {
+interface Props extends WebcamProps {
   audio: boolean;
-  ref: React.RefObject<Webcam>;
-  videoConstraints: {};
-}
-const WebcamComponent = () => {
-  const webcamRef = useRef<Webcam>(null);
-
-  const videoConstraints = {
-    width: 1280,
-    height: 720,
+  videoConstraints: {
+    width: number;
+    height: number;
   };
+}
 
+const WebcamComponent = forwardRef<Webcam, Props>((props, ref) => {
   return (
     <div>
-      <Webcam
-        audio={false}
-        ref={webcamRef}
-        videoConstraints={videoConstraints}
-      />
+      <Webcam {...props} ref={ref} />
     </div>
   );
-};
+});
 
 export default WebcamComponent;

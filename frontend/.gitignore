@@ -1,0 +1,2 @@
+# This will ignore all 'node_modules' directories in the repository
+node_modules/
