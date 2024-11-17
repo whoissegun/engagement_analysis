@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Dark theme */
+    --primary: #6A0DAD;
+    --secondary: #1E90FF;
+    --bg-gradient-from: #000000;
+    --bg-gradient-via: #2D1B4E;
+    --bg-gradient-to: #1A365D;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.8);
+    --card-bg: rgba(0, 0, 0, 0.3);
+    --card-border: rgba(255, 255, 255, 0.1);
+  }
+
+  :root[data-theme='light'] {
+    --primary: #8B31FF;
+    --secondary: #3B82F6;
+    --bg-gradient-from: #F0F4FF;
+    --bg-gradient-via: #E9DDFF;
+    --bg-gradient-to: #DCE8FF;
+    --text-primary: #1A1A1A;
+    --text-secondary: rgba(26, 26, 26, 0.8);
+    --card-bg: rgba(255, 255, 255, 0.7);
+    --card-border: rgba(0, 0, 0, 0.1);
+  }
+
+  body {
+    @apply min-h-screen font-sans antialiased transition-colors duration-300;
+    background: linear-gradient(135deg, 
+      var(--bg-gradient-from),
+      var(--bg-gradient-via),
+      var(--bg-gradient-to)
+    );
+    color: var(--text-primary);
+  }
+}
+
+.wave-animation {
+  animation: wave 8s ease-in-out infinite;
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  background-size: 200% 200%;
+}
+
+.camera-glow {
+  box-shadow: 0 0 20px var(--primary),
+              0 0 40px var(--secondary);
+}
+
+@keyframes wave {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
