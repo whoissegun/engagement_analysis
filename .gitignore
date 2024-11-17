@@ -1,0 +1,55 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+env/
+venv/
+ENV/
+.venv/
+.ENV/
+
+# MediaPipe cache
+mediapipe_cache/
+mediapipe_graphs/
+
+# Images and videos (if generated during testing)
+*.jpg
+*.jpeg
+*.png
+*.mp4
+*.avi
+*.mov
+
+# Logs and debug files
+*.log
+*.out
+*.err
+
+# Data files
+*.csv
+*.json
+
+# Config files (if any sensitive information might be included)
+*.ini
+*.cfg
+*.env
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE-specific files
+.vscode/
+.idea/
+*.iml
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
