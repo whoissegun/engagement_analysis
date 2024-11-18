@@ -2,37 +2,39 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Github, Linkedin, Twitter } from "lucide-react";
 
+import khizar from "./images/khizar.jpeg";
+import tendi from "./images/tendi.jpeg";
+import kuro from "./images/kuro.jpeg";
+import divine from "./images/divine.jpg";
+import { div } from "framer-motion/client";
+
 const team = [
+  {
+    name: "Khizar Malik",
+    role: "Front End Developer",
+    image: khizar,
+    social: {
+      github: "https://github.com/khizarrm",
+      linkedin: "https://www.linkedin.com/in/khizar--malik/",
+      twitter: "#",
+    },
+  },
   {
     name: "Tendi Sambaza",
     role: "AI Engineer",
-    image:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&h=300",
-    bio: "Leading our AI engagement detection algorithms",
+    image: tendi,
     social: { github: "#", linkedin: "#", twitter: "#" },
   },
   {
     name: "Divine Jojolola",
     role: "UX Designer",
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&h=300",
-    bio: "Creating intuitive and beautiful user experiences",
+    image: divine,
     social: { github: "#", linkedin: "#", twitter: "#" },
   },
   {
     name: "Kuro Gboun",
-    role: "Full Stack Developer",
-    image:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&h=300",
-    bio: "Building robust and scalable solutions",
-    social: { github: "#", linkedin: "#", twitter: "#" },
-  },
-  {
-    name: "Khizar Malik",
-    role: "Full Stack Developer",
-    image:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&h=300",
-    bio: "Building robust and scalable solutions",
+    role: "Backend Pipeline",
+    image: kuro,
     social: { github: "#", linkedin: "#", twitter: "#" },
   },
 ];
@@ -55,7 +57,7 @@ const TeamSection = () => {
           your peak performance.
         </p>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-4 gap-8">
           {team.map((member, index) => (
             <motion.div
               key={member.name}

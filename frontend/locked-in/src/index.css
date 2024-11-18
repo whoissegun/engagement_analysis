@@ -5,11 +5,11 @@
 @layer base {
   :root {
     /* Dark theme */
-    --primary: #6A0DAD;
-    --secondary: #1E90FF;
-    --bg-gradient-from: #000000;
-    --bg-gradient-via: #2D1B4E;
-    --bg-gradient-to: #1A365D;
+    --primary: #f9fafa;
+    --secondary: #ffffff;
+    --bg-gradient-from: #27342d; /* Updated */
+    --bg-gradient-via: #212e35; /* Updated */
+    --bg-gradient-to: #000000;   /* Updated */
     --text-primary: #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.8);
     --card-bg: rgba(0, 0, 0, 0.3);
@@ -17,15 +17,16 @@
   }
 
   :root[data-theme='light'] {
-    --primary: #8B31FF;
-    --secondary: #3B82F6;
-    --bg-gradient-from: #F0F4FF;
-    --bg-gradient-via: #E9DDFF;
-    --bg-gradient-to: #DCE8FF;
-    --text-primary: #1A1A1A;
-    --text-secondary: rgba(26, 26, 26, 0.8);
-    --card-bg: rgba(255, 255, 255, 0.7);
-    --card-border: rgba(0, 0, 0, 0.1);
+    /* Light theme aligned with dark theme color scheme */
+    --primary: #27342d; /* Dark green for primary elements */
+    --secondary: #212e35; /* Darker blue for secondary elements */
+    --bg-gradient-from: #dce8ff; /* Light gradient start */
+    --bg-gradient-via: #f0f4ff; /* Light gradient middle */
+    --bg-gradient-to: #ffffff;   /* White gradient end */
+    --text-primary: #27342d; /* Dark green text for readability */
+    --text-secondary: rgba(39, 52, 45, 0.8); /* Slightly transparent dark text */
+    --card-bg: rgba(255, 255, 255, 0.9); /* Light card background */
+    --card-border: rgba(39, 52, 45, 0.1); /* Subtle dark border */
   }
 
   body {
@@ -40,18 +41,24 @@
 }
 
 .wave-animation {
-  animation: wave 8s ease-in-out infinite;
-  background: linear-gradient(45deg, var(--primary), var(--secondary));
-  background-size: 200% 200%;
+  animation: wave 6s ease-in-out infinite; /* Reduced duration for a more dynamic effect */
+  background: linear-gradient(45deg, #bbd2c5, #536976, #292e49); /* Updated gradient */
+  background-size: 300% 300%; /* Increased background size for smoother animation */
+  border-radius: 8px; /* Optional: Adds rounded corners for aesthetic */
 }
 
 .camera-glow {
-  box-shadow: 0 0 20px var(--primary),
-              0 0 40px var(--secondary);
+  box-shadow: 0 0 30px #bbd2c5, 0 0 60px #536976; /* Enhanced glow with new colors */
 }
 
 @keyframes wave {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
+}
+
+@media (min-width: 768px) {
+  .md\:grid-cols-3 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
