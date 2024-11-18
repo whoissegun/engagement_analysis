@@ -1,7 +1,5 @@
 import numpy as np
 
-import numpy as np
-
 def calculate_mouth_aspect_ratio(landmarks, frame_width, frame_height):
     """
     Calculate the Mouth Aspect Ratio (MAR) using facial landmarks.

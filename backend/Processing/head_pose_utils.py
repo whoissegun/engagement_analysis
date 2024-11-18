@@ -3,7 +3,9 @@ import numpy as np
 
 def calculate_head_pose(face_landmarks, frame):
     size = frame.shape
-    focal_length = size[1]
+    # Use a more realistic focal length estimate based on typical webcam FOV
+    # Assuming ~60 degree horizontal FOV
+    focal_length = size[1] / (2 * np.tan(np.pi/6))  # 60 degrees = pi/3, so half is pi/6
     center = (size[1] / 2, size[0] / 2)
     camera_matrix = np.array(
         [[focal_length, 0, center[0]],
@@ -11,9 +13,12 @@ def calculate_head_pose(face_landmarks, frame):
          [0, 0, 1]], dtype="double"
     )
 
-    dist_coeffs = np.zeros((4, 1))  # Assuming no lens distortion
+    # Add typical distortion coefficients for webcams
+    # k1, k2 (radial distortion) and p1, p2 (tangential distortion)
+    dist_coeffs = np.array([0.1, 0.1, 0.01, 0.01], dtype=np.float32).reshape((4,1))
 
-    # 3D model points
+    # 3D model points - current values are approximate
+    # Consider adjusting these based on average face proportions
     model_points = np.array([
         (0.0, 0.0, 0.0),             # Nose tip
         (0.0, -330.0, -65.0),        # Chin
@@ -23,7 +28,7 @@ def calculate_head_pose(face_landmarks, frame):
         (150.0, -150.0, -125.0)      # Right mouth corner
     ])
 
-    # 2D image points
+    # Get 2D points from landmarks
     image_points = np.array([
         get_point(face_landmarks, 1, frame),     # Nose tip
         get_point(face_landmarks, 152, frame),   # Chin
@@ -33,48 +38,41 @@ def calculate_head_pose(face_landmarks, frame):
         get_point(face_landmarks, 291, frame)    # Right mouth corner
     ], dtype="double")
 
-    # print("Image Points:", image_points)
-
-    # Solve PnP
     success, rotation_vector, translation_vector = cv2.solvePnP(
-        model_points, image_points, camera_matrix, dist_coeffs
+        model_points, image_points, camera_matrix, dist_coeffs,
+        flags=cv2.SOLVEPNP_ITERATIVE
     )
 
-    # Obtain rotation matrix
-    rotation_matrix, jacobian = cv2.Rodrigues(rotation_vector)
-    # print("Rotation Vector:", rotation_vector)
-    # print("Rotation Matrix:", rotation_matrix)
-
-    # Compute Euler angles
+    # Convert rotation vector to rotation matrix
+    rotation_matrix, _ = cv2.Rodrigues(rotation_vector)
+    
+    # Create projection matrix
     pose_mat = cv2.hconcat((rotation_matrix, translation_vector))
+    
+    # Get Euler angles
     _, _, _, _, _, _, euler_angles = cv2.decomposeProjectionMatrix(pose_mat)
+    
+    pitch, yaw, roll = [angle.item() for angle in euler_angles.flatten()]
 
-    pitch, yaw, roll = euler_angles.flatten()
+    # Normalize angles
+    # pitch = normalize_angle(pitch)
+    # yaw = normalize_angle(yaw)
+    # roll = normalize_angle(roll)
 
-    # Normalize pitch to [-90, 90]
-    if pitch > 90:
-        pitch = pitch - 360
-    print(f"Pitch: {pitch}, Yaw: {yaw}, Roll: {roll}")
     return pitch, yaw, roll
 
+def normalize_angle(angle):
+    """Normalize angle to [-180, 180] range"""
+    while angle > 180:
+        angle -= 360
+    while angle < -180:
+        angle += 360
+    return angle
 
 def get_point(face_landmarks, index, frame):
-    """
-    Convert a normalized landmark to pixel coordinates.
-
-    Args:
-        face_landmarks: MediaPipe NormalizedLandmarkList.
-        index: Index of the landmark.
-        frame: Video frame (to get dimensions).
-
-    Returns:
-        (x, y): Tuple of pixel coordinates.
-    """
+    """Convert MediaPipe normalized landmark to pixel coordinates"""
     h, w, _ = frame.shape
     landmark = face_landmarks.landmark[index]
     x = int(landmark.x * w)
     y = int(landmark.y * h)
-    # Clamp the coordinates to the frame bounds
-    x = max(0, min(x, w - 1))
-    y = max(0, min(y, h - 1))
-    return (x, y)
+    return (max(0, min(x, w - 1)), max(0, min(y, h - 1)))
