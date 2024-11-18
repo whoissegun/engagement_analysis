@@ -3,10 +3,20 @@ import numpy as np
 from collections import deque
 import time
 from backend.models.EngagementClassifierV1 import EngagementClassifierV1
-
-# from ..Processing.FaceFeatureExtractor import FaceFeatures, FaceFeatureExtractor
+import mediapipe as mp
 from backend.Processing.FaceFeatureExtractor import FaceFeatureExtractor, FaceFeatures
 import cv2
+
+# Initialize MediaPipe
+mp_face_mesh = mp.solutions.face_mesh
+face_mesh = mp_face_mesh.FaceMesh(
+    max_num_faces=2,
+    static_image_mode=False,
+    refine_landmarks=True,
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5
+)
+
 class EngagementPredictor:
     def __init__(self, model_path: str, window_size: int = 30, threshold: float = 0.5):
         """
@@ -47,7 +57,6 @@ class EngagementPredictor:
             features.time_since_gaze_shift
         ]).reshape(1, -1)
         
-        # Scale features if scaler was used during training
         if self.feature_scaler is not None:
             feature_vector = self.feature_scaler.transform(feature_vector)
             
@@ -59,19 +68,14 @@ class EngagementPredictor:
         Returns prediction with confidence and smoothed prediction.
         """
         with torch.no_grad():
-            # Preprocess features
             input_tensor = self._preprocess_features(features)
-            
-            # Get model prediction
             logits = self.model(input_tensor)
             probabilities = torch.softmax(logits, dim=1)
             prediction = torch.argmax(probabilities, dim=1).item()
             confidence = probabilities[0][prediction].item()
             
-            # Add to history for temporal smoothing
             self.prediction_history.append(prediction)
             
-            # Calculate smoothed prediction
             if len(self.prediction_history) >= self.window_size:
                 counts = np.bincount(list(self.prediction_history))
                 smoothed_prediction = np.argmax(counts)
@@ -82,80 +86,112 @@ class EngagementPredictor:
                 'raw_prediction': self.engagement_labels[prediction],
                 'smoothed_prediction': self.engagement_labels[smoothed_prediction],
                 'confidence': confidence,
-                'probabilities': probabilities[0].cpu().numpy()
+                'probabilities': probabilities[0].cpu().numpy().tolist()
             }
 
 def main():
     # Initialize components
     cap = cv2.VideoCapture(0)
-    extractor = FaceFeatureExtractor()
+    feature_extractor = FaceFeatureExtractor()
     predictor = EngagementPredictor(
-        model_path='backend/models/model (1).pth',
+        model_path='backend/models/best_model_v3.pth',
         window_size=30,
         threshold=0.5
     )
+
+    print("\n*\n*\n*\nStarting real-time engagement detection. Press 'q' to quit.\n*\n*\n*\n")
     
-    # Performance monitoring
-    frame_times = deque(maxlen=30)
-    frame_count = 0
     while cap.isOpened():
-        frame_start = time.time()
-        
-        
-        # Capture and process frame
         ret, frame = cap.read()
         if not ret:
             break
-            
-        # Extract features
-        features = extractor.extract_features(frame)
-        # frame_count += 1
-        # if frame_count % 100 == 0:
-        #     extractor.adjust_feature_sensitivity()
-        #print("features:: ", features)
-        
-        # Get prediction
-        prediction = predictor.predict(features)
-        #print("prediction:: ", prediction)
-        
-        # Calculate FPS
-        frame_times.append(time.time() - frame_start)
-        fps = 1.0 / (sum(frame_times) / len(frame_times))
-        
-        # Display results
-        cv2.putText(frame, f"Engagement: {prediction['smoothed_prediction']}", 
-                    (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-        cv2.putText(frame, f"Confidence: {prediction['confidence']:.2f}", 
-                    (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-        cv2.putText(frame, f"FPS: {fps:.1f}", 
-                    (10, 270), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-        
-        # Display probabilities as bar chart
-        bar_width = 100
-        bar_height = 20
-        for i, prob in enumerate(prediction['probabilities']):
-            width = int(prob * bar_width)
-            cv2.rectangle(frame, 
-                         (300, 210 + i*30), 
-                         (300 + width, 230 + i*30), 
-                         (0, 255, 0), 
-                         -1)
-            cv2.putText(frame, 
-                       f"{predictor.engagement_labels[i]}: {prob:.2f}", 
-                       (410, 225 + i*30), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 
-                       0.6, 
-                       (0, 255, 0), 
-                       2)
-        
-        # Show frame
-        cv2.imshow('Engagement Classification', frame)
+
+        frame = cv2.flip(frame, 1)
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = face_mesh.process(frame_rgb)
+
+        if results.multi_face_landmarks:
+            for face_landmarks in results.multi_face_landmarks:
+                frame_height, frame_width, _ = frame.shape
+
+                # Draw facial landmarks
+                for idx, landmark in enumerate(face_landmarks.landmark):
+                    x = int(landmark.x * frame_width)
+                    y = int(landmark.y * frame_height)
+                    if idx in [468, 473, 33, 133, 362, 263, 1, 152, 61, 291, 13, 14, 17, 18, 78, 308]:
+                        cv2.circle(frame, (x, y), 5, (0, 140, 255), -1)
+                    else:
+                        cv2.circle(frame, (x, y), 1, (0, 255, 255), -1)
+
+                # Draw mesh connections
+                for connection in mp_face_mesh.FACEMESH_TESSELATION:
+                    start_idx = connection[0]
+                    end_idx = connection[1]
+                    start_landmark = face_landmarks.landmark[start_idx]
+                    end_landmark = face_landmarks.landmark[end_idx]
+
+                    x_start = int(start_landmark.x * frame_width)
+                    y_start = int(start_landmark.y * frame_height)
+                    x_end = int(end_landmark.x * frame_width)
+                    y_end = int(end_landmark.y * frame_height)
+
+                    cv2.line(frame, (x_start, y_start), (x_end, y_end), (255, 0, 0), 1)
+
+                # Draw iris landmarks
+                for connection in mp_face_mesh.FACEMESH_IRISES:
+                    start_idx = connection[0]
+                    end_idx = connection[1]
+                    start_landmark = face_landmarks.landmark[start_idx]
+                    end_landmark = face_landmarks.landmark[end_idx]
+
+                    x_start = int(start_landmark.x * frame_width)
+                    y_start = int(start_landmark.y * frame_height)
+                    x_end = int(end_landmark.x * frame_width)
+                    y_end = int(end_landmark.y * frame_height)
+
+                    cv2.line(frame, (x_start, y_start), (x_end, y_end), (0, 255, 0), 1)
+
+                # Extract features and get prediction
+                features = feature_extractor.extract_features(frame, face_landmarks)
+                pred_result = predictor.predict(features=features)
+
+                # Display feature information
+                info_text = [
+                    f"Pitch: {features.head_pitch:.2f}",
+                    f"Yaw: {features.head_yaw:.2f}",
+                    f"Roll: {features.head_roll:.2f}",
+                    f"Gaze X: {features.gaze_x:.2f}, Y: {features.gaze_y:.2f}",
+                    f"Gaze Var X: {features.gaze_variation_x:.3f}, Y: {features.gaze_variation_y:.3f}",
+                    f"Eye Contact: {'Yes' if features.eye_contact_detected else 'No'}",
+                    f"Blink: {'Yes' if features.is_blinking else 'No'}",
+                    f"MAR: {features.mar:.2f}",
+                    f"Prediction: {pred_result['smoothed_prediction']}"  # Fixed f-string syntax
+                ]
+
+                for i, text in enumerate(info_text):
+                    y_pos = 30 + (i * 30)
+                    cv2.putText(frame, text, (10, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+
+                # Display warnings
+                if features.yawn_detected:
+                    text = "YAWNING DETECTED!"
+                    text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
+                    text_x = (frame.shape[1] - text_size[0]) // 2
+                    cv2.putText(frame, text, (text_x, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
+                if not features.is_focused:
+                    text = f"Distracted for {features.distraction_duration:.1f}s"
+                    text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)[0]
+                    text_x = (frame.shape[1] - text_size[0]) // 2
+                    text_y = frame.shape[0] - 20
+                    cv2.putText(frame, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+
+        cv2.imshow("Lock'dIn Processor", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-    
+
     cap.release()
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     main()
-

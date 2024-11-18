@@ -1,51 +1,42 @@
-from torch import nn
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
 class EngagementClassifierV1(nn.Module):
     def __init__(self, input_size=12, output_size=3):
         super().__init__()
 
-        self.layers = nn.Sequential(
-            nn.Linear(in_features=input_size, out_features=24),
-            nn.BatchNorm1d(24),
-            nn.ReLU(),
-            nn.Dropout(0.45),
+        # Smaller network with careful normalization
+        self.bn_input = nn.BatchNorm1d(input_size)
 
-            nn.Linear(in_features=24, out_features=32),
-            nn.BatchNorm1d(32),
-            nn.ReLU(),
-            nn.Dropout(0.45),
-
-            nn.Linear(in_features=32, out_features=48),
-            nn.BatchNorm1d(48),
-            nn.ReLU(),
-            nn.Dropout(0.45),
-
-            nn.Linear(in_features=48, out_features=64),
+        self.block1 = nn.Sequential(
+            nn.Linear(input_size, 64),
             nn.BatchNorm1d(64),
-            nn.ReLU(),
-            nn.Dropout(0.45),
-
-            nn.Linear(in_features=64, out_features=86),
-            nn.BatchNorm1d(86),
-            nn.ReLU(),
-            nn.Dropout(0.45),
-
-            nn.Linear(in_features=86, out_features=64),
-            nn.BatchNorm1d(64),
-            nn.ReLU(),
-            nn.Dropout(0.45),
-
-            nn.Linear(in_features=64, out_features=32),  # Fixed dimension mismatch
-            nn.BatchNorm1d(32),
-            nn.ReLU(),
-            nn.Dropout(0.45),
-
-            nn.Linear(in_features=32, out_features=16),
-            nn.BatchNorm1d(16),
-            nn.ReLU(),
-            nn.Dropout(0.45),
-
-            nn.Linear(in_features=16, out_features=output_size),
+            nn.LeakyReLU(0.1),
+            nn.Dropout(0.3)
         )
 
+        self.block2 = nn.Sequential(
+            nn.Linear(64, 32),
+            nn.BatchNorm1d(32),
+            nn.LeakyReLU(0.1),
+            nn.Dropout(0.3)
+        )
+
+        self.classifier = nn.Linear(32, output_size)
+
+        # Initialize weights properly
+        self.apply(self._init_weights)
+
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            nn.init.kaiming_normal_(module.weight, mode='fan_out', nonlinearity='relu')
+            if module.bias is not None:
+                nn.init.constant_(module.bias, 0)
+
     def forward(self, x):
-        return self.layers(x)  # Fixed forward method
+        x = self.bn_input(x)
+        x = self.block1(x)
+        x = self.block2(x)
+        x = self.classifier(x)
+        return x
