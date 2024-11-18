@@ -96,7 +96,7 @@ while cap.isOpened():
             
             head_pitch, head_yaw, head_roll = calculate_head_pose(face_landmarks, frame)
 
-            gaze_x, gaze_y = calculate_gaze_with_iris(face_landmarks.landmark, frame_width, frame_height)
+            gaze_x, gaze_y = calculate_gaze_with_iris(face_landmarks.landmark, frame_width, frame_height, True)
             if abs(head_pitch - last_pitch) > 2 or abs(head_yaw - last_yaw) > 2 or abs(head_roll - last_roll) > 2:
                 last_head_movement_time = time.time()  # Update on significant movement
             time_since_head_movement = time.time() - last_head_movement_time
@@ -132,9 +132,10 @@ while cap.isOpened():
 
             # Calculate eye contact using gaze coordinates
             eye_contact_detected = calculate_eye_contact(gaze_x, gaze_y)
-            eye_contact_detected, eye_contact_duration = eye_contact_buffer.update_eye_contact(eye_contact_detected)
-            is_focused, distraction_duration = eye_contact_buffer.update_eye_contact(eye_contact_detected)
-            eye_contact_duration = eye_contact_buffer.eye_contact_duration
+            is_focused, eye_contact_duration, distraction_duration = eye_contact_buffer.update_eye_contact(eye_contact_detected)
+            # eye_contact_detected, eye_contact_duration = eye_contact_buffer.update_eye_contact(eye_contact_detected)
+            # is_focused, distraction_duration = eye_contact_buffer.update_eye_contact(eye_contact_detected)
+            # eye_contact_duration = eye_contact_buffer.eye_contact_duration
 
             # Calculate blink ratio
             left_blink_ratio = calculate_blinking_ratio(face_landmarks.landmark, LEFT_EYE_POINTS)
@@ -166,32 +167,53 @@ while cap.isOpened():
                 cv2.putText(frame, text, (text_x, 50), font, font_scale, color, thickness)
 
             # Enhanced visualization with iris-based gaze information
-            cv2.putText(frame, f"Pitch: {head_pitch:.2f}, Yaw: {head_yaw:.2f}, Roll: {head_roll:.2f}", 
-                       (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            cv2.putText(frame, f"Pitch (Up and Down Movement): {head_pitch:.2f}", 
+                    (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            cv2.putText(frame, f"Yaw (Left and Right Movement): {head_yaw:.2f}", 
+                    (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            cv2.putText(frame, f"Roll (Tilt or Sideways Movement): {head_roll:.2f}", 
+                    (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             cv2.putText(frame, f"Iris Gaze X: {gaze_x:.2f}, Y: {gaze_y:.2f}", 
-                       (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                    (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             cv2.putText(frame, f"Gaze Variation X: {gaze_var_x:.3f}, Y: {gaze_var_y:.3f}", 
-                       (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                    (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             cv2.putText(frame, f"Eye Contact: {'Yes' if eye_contact_detected else 'No'}", 
-                       (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                    (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             cv2.putText(frame, f"Blink: {'Yes' if is_blinking else 'No'}", 
-                       (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-            cv2.putText(frame, f"MAR: {mar:.2f}", 
-                       (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 0), 2)
-            print("")
-            print(f"Head Pose: Pitch: {head_pitch:.2f}, Yaw: {head_yaw:.2f}, Roll: {head_roll:.2f}")
-            print(f"Iris Gaze: X: {gaze_x:.2f}, Y: {gaze_y:.2f}")
-            print(f"Gaze Variation: X: {gaze_var_x:.3f}, Y: {gaze_var_y:.3f}")
-            print(f"Eye Contact Duration: {eye_contact_duration:.2f}s")
-            print(f"Face Confidence: {face_confidence:.3f}")
-            print(f"Landmarks Stability: {stability:.3f}")
-            print(f"Time Since Head Movement: {time_since_head_movement:.1f}s")
-            print(f"Time Since Gaze Shift: {time_since_gaze_shift:.1f}s")
+                    (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            cv2.putText(frame, f"MAR (Mouth Aspect Ratio): {mar:.2f}", 
+                    (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 0), 2)
+
+            # print("")
+            # print(f"Head Pose: Pitch: {head_pitch:.2f}, Yaw: {head_yaw:.2f}, Roll: {head_roll:.2f}")
+            # print(f"Iris Gaze: X: {gaze_x:.2f}, Y: {gaze_y:.2f}")
+            # print(f"Gaze Variation: X: {gaze_var_x:.3f}, Y: {gaze_var_y:.3f}")
+            # print(f"Eye Contact Duration: {eye_contact_duration:.2f}s")
+            # print(f"Face Confidence: {face_confidence:.3f}")
+            # print(f"Landmarks Stability: {stability:.3f}")
+            # print(f"Time Since Head Movement: {time_since_head_movement:.1f}s")
+            # print(f"Time Since Gaze Shift: {time_since_gaze_shift:.1f}s")
 
             # Display distraction warning
             if not is_focused:
-                cv2.putText(frame, f"Distracted for {distraction_duration:.1f}s", 
-                           (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                text = f"Distracted for {distraction_duration:.1f}s"
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                font_scale = 0.8
+                thickness = 2
+                color = (0, 0, 255)  # Red
+
+                # Calculate text size
+                text_size = cv2.getTextSize(text, font, font_scale, thickness)[0]
+                text_width = text_size[0]
+                text_height = text_size[1]
+
+                # Calculate bottom-center position
+                text_x = (frame.shape[1] - text_width) // 2
+                text_y = frame.shape[0] - 20  # Slightly above the bottom edge
+
+                # Draw the text
+                cv2.putText(frame, text, (text_x, text_y), font, font_scale, color, thickness)
+
 
             prev_landmarks = face_landmarks
     # Display the frame

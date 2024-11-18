@@ -7,7 +7,7 @@ MOVEMENT_THRESHOLD = 7       # Threshold for significant head movement (degrees)
 LEFT_EYE_POINTS = [33, 160, 158, 133, 153, 144]
 RIGHT_EYE_POINTS = [362, 385, 387, 263, 373, 380]
 GAZE_THRESHOLD_X = 0.1 # Horizontal tolerance
-GAZE_THRESHOLD_Y = 0.4  # Vertical tolerance (wider range for top/bottom)
+GAZE_THRESHOLD_Y = 0.6  # Vertical tolerance (wider range for top/bottom)
 
 BLINK_RATIO_THRESHOLD = 4.5 
 
