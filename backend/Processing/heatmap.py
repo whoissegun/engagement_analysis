@@ -3,8 +3,8 @@ import numpy as np
 import mediapipe as mp
 import time
 
-from eyes_utils import calculate_gaze_with_iris
-from head_pose_utils import calculate_head_pose
+from backend.Processing.eyes_utils import calculate_gaze_with_iris
+from backend.Processing.head_pose_utils import calculate_head_pose
 
 # Initialize MediaPipe
 mp_face_mesh = mp.solutions.face_mesh
