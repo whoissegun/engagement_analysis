@@ -1,7 +1,8 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import { motion } from 'framer-motion';
 import { Camera, CameraOff } from 'lucide-react';
+
 
 const WebcamComponent = () => {
   const webcamRef = useRef<Webcam>(null);
@@ -10,6 +11,47 @@ const WebcamComponent = () => {
   const handleToggleWebcam = useCallback(() => {
     setIsEnabled(!isEnabled);
   }, [isEnabled]);
+
+  // Function to send frame to backend
+  const sendFrameToBackend = useCallback(async () => {
+    if (webcamRef.current) {
+      const imageSrc = webcamRef.current.getScreenshot(); // Capture a single frame
+      if (imageSrc) {
+        try {
+          const response = await fetch('http://127.0.0.1:5011/api/process-frame', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ frame: imageSrc }),
+          });
+
+          if (!response.ok) {
+            console.error('Failed to process frame:', response.statusText);
+            return;
+          }
+
+          const data = await response.json();
+          setPrediction(data); // Update the prediction state with the response
+          console.log('Prediction:', data);
+        } catch (error) {
+          console.error('Error sending frame to backend:', error);
+        }
+      } else {
+        console.warn('No frame captured. Webcam might not be active.');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    let interval = null;
+
+    if (isEnabled) {
+      interval = setInterval(sendFrameToBackend, 1000); // Send frame every 1 second
+    }
+
+    return () => {
+      if (interval) clearInterval(interval); // Cleanup on disable
+    };
+  }, [isEnabled, sendFrameToBackend]);
 
   return (
     <motion.div
@@ -30,7 +72,7 @@ const WebcamComponent = () => {
             <p className="text-secondary">Camera disabled</p>
           </div>
         )}
-        
+
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -63,3 +105,7 @@ const WebcamComponent = () => {
 };
 
 export default WebcamComponent;
+
+function setPrediction(data: any) {
+  throw new Error('Function not implemented.');
+}
