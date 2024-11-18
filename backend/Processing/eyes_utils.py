@@ -2,6 +2,10 @@ import numpy as np
 import math
 import time
 from config import GAZE_THRESHOLD_X, GAZE_THRESHOLD_Y, DISTRACTION_TIME_LIMIT
+import numpy as np
+import math
+import time
+
 def calculate_gaze_with_iris(landmarks, frame_width, frame_height, debug=False):
     """
     Calculate gaze direction based on iris position relative to eye boundary.
@@ -15,76 +19,168 @@ def calculate_gaze_with_iris(landmarks, frame_width, frame_height, debug=False):
     Returns:
         gaze_x, gaze_y: Normalized gaze coordinates (horizontal, vertical).
     """
-    # Debugging function to print landmark details
     def print_landmark_details(index, name):
         landmark = landmarks[index]
         print(f"{name} Landmark - x: {landmark.x}, y: {landmark.y}, z: {landmark.z}")
 
-    # Camera position compensation for top-mounted camera
-    TOP_CAMERA_VERTICAL_BIAS = 0.1
+    # Camera position compensation - adjusted for more natural range
+    TOP_CAMERA_VERTICAL_BIAS = 0.5  # Increased to center the range
 
-    # Iris and eye boundary point indices
+    # Landmark indices
     IRIS_LEFT = 468
     IRIS_RIGHT = 473
     EYE_LEFT_CORNER = 33
     EYE_RIGHT_CORNER = 133
     EYE_RIGHT_LEFT_CORNER = 362
     EYE_RIGHT_RIGHT_CORNER = 263
+    
+    # Additional vertical landmark indices for better vertical tracking
+    LEFT_EYE_TOP = 159     # Top point of left eye
+    LEFT_EYE_BOTTOM = 145  # Bottom point of left eye
+    RIGHT_EYE_TOP = 386    # Top point of right eye
+    RIGHT_EYE_BOTTOM = 374 # Bottom point of right eye
 
-    # Debug: Print landmark details if enabled
     if debug:
         print_landmark_details(IRIS_LEFT, "Left Iris")
         print_landmark_details(IRIS_RIGHT, "Right Iris")
         print_landmark_details(EYE_LEFT_CORNER, "Left Eye Left Corner")
         print_landmark_details(EYE_RIGHT_CORNER, "Left Eye Right Corner")
 
-    # Get iris and eye boundary coordinates
+    # Get landmark coordinates
     left_iris_center = landmarks[IRIS_LEFT]
     right_iris_center = landmarks[IRIS_RIGHT]
     left_eye_left_corner = landmarks[EYE_LEFT_CORNER]
     left_eye_right_corner = landmarks[EYE_RIGHT_CORNER]
     right_eye_left_corner = landmarks[EYE_RIGHT_LEFT_CORNER]
     right_eye_right_corner = landmarks[EYE_RIGHT_RIGHT_CORNER]
+    
+    # Get vertical landmarks
+    left_eye_top = landmarks[LEFT_EYE_TOP]
+    left_eye_bottom = landmarks[LEFT_EYE_BOTTOM]
+    right_eye_top = landmarks[RIGHT_EYE_TOP]
+    right_eye_bottom = landmarks[RIGHT_EYE_BOTTOM]
 
-    # Calculate eye widths and heights with safe division
     def safe_division(a, b, default=0.5):
         return a / b if b != 0 else default
 
-    # Calculate gaze with more robust tracking
+    # Horizontal calculations remain the same
     left_eye_width = max(left_eye_right_corner.x - left_eye_left_corner.x, 0.01)
-    left_eye_height = max(left_eye_right_corner.y - left_eye_left_corner.y, 0.01)
     right_eye_width = max(right_eye_right_corner.x - right_eye_left_corner.x, 0.01)
-    right_eye_height = max(right_eye_right_corner.y - right_eye_left_corner.y, 0.01)
+    
+    # Improved vertical measurements using top and bottom points
+    left_eye_height = max(left_eye_bottom.y - left_eye_top.y, 0.01)
+    right_eye_height = max(right_eye_bottom.y - right_eye_top.y, 0.01)
 
     # Horizontal gaze calculation
     left_gaze_x = safe_division(left_iris_center.x - left_eye_left_corner.x, left_eye_width)
     right_gaze_x = safe_division(right_iris_center.x - right_eye_left_corner.x, right_eye_width)
     
-    # Vertical gaze calculation with explicit coordinate differences
-    left_gaze_y = safe_division(left_iris_center.y - left_eye_left_corner.y, left_eye_height)
-    right_gaze_y = safe_division(right_iris_center.y - right_eye_left_corner.y, right_eye_height)
+    # Improved vertical gaze calculation
+    left_gaze_y = safe_division(left_iris_center.y - left_eye_top.y, left_eye_height) - 0.5
+    right_gaze_y = safe_division(right_iris_center.y - right_eye_top.y, right_eye_height) - 0.5
 
-    # Debug: Print calculated gaze values
     if debug:
         print(f"Left Gaze - x: {left_gaze_x}, y: {left_gaze_y}")
         print(f"Right Gaze - x: {right_gaze_x}, y: {right_gaze_y}")
 
-    # Average the gaze values from both eyes
+    # Average the gaze values
     gaze_x = (left_gaze_x + right_gaze_x) / 2
     gaze_y = (left_gaze_y + right_gaze_y) / 2
 
-    # Apply vertical bias for top-mounted camera
-    gaze_y += TOP_CAMERA_VERTICAL_BIAS
+    # Apply camera bias and normalize to [-1, 1] range first
+    gaze_y = gaze_y + TOP_CAMERA_VERTICAL_BIAS
 
-    # Clip values to ensure they remain in a reasonable range
+    # Now normalize to [0, 1] range for final output
     gaze_x = max(0, min(gaze_x, 1))
-    gaze_y = max(0, min(gaze_y, 1))
+    gaze_y = max(0, min((gaze_y + 1) / 2, 1))  # Convert from [-1, 1] to [0, 1]
 
-    # Final debug output
     if debug:
         print(f"Final Gaze - x: {gaze_x}, y: {gaze_y}")
 
     return gaze_x, gaze_y
+# def calculate_gaze_with_iris(landmarks, frame_width, frame_height, debug=False):
+#     """
+#     Calculate gaze direction based on iris position relative to eye boundary.
+    
+#     Args:
+#         landmarks: MediaPipe face landmarks.
+#         frame_width: Width of the frame (for scaling normalized coordinates).
+#         frame_height: Height of the frame (for potential future scaling).
+#         debug: Enable detailed debugging output
+    
+#     Returns:
+#         gaze_x, gaze_y: Normalized gaze coordinates (horizontal, vertical).
+#     """
+#     # Debugging function to print landmark details
+#     def print_landmark_details(index, name):
+#         landmark = landmarks[index]
+#         print(f"{name} Landmark - x: {landmark.x}, y: {landmark.y}, z: {landmark.z}")
+
+#     # Camera position compensation for top-mounted camera
+#     TOP_CAMERA_VERTICAL_BIAS = 0.1
+
+#     # Iris and eye boundary point indices
+#     IRIS_LEFT = 468
+#     IRIS_RIGHT = 473
+#     EYE_LEFT_CORNER = 33
+#     EYE_RIGHT_CORNER = 133
+#     EYE_RIGHT_LEFT_CORNER = 362
+#     EYE_RIGHT_RIGHT_CORNER = 263
+
+#     # Debug: Print landmark details if enabled
+#     if debug:
+#         print_landmark_details(IRIS_LEFT, "Left Iris")
+#         print_landmark_details(IRIS_RIGHT, "Right Iris")
+#         print_landmark_details(EYE_LEFT_CORNER, "Left Eye Left Corner")
+#         print_landmark_details(EYE_RIGHT_CORNER, "Left Eye Right Corner")
+
+#     # Get iris and eye boundary coordinates
+#     left_iris_center = landmarks[IRIS_LEFT]
+#     right_iris_center = landmarks[IRIS_RIGHT]
+#     left_eye_left_corner = landmarks[EYE_LEFT_CORNER]
+#     left_eye_right_corner = landmarks[EYE_RIGHT_CORNER]
+#     right_eye_left_corner = landmarks[EYE_RIGHT_LEFT_CORNER]
+#     right_eye_right_corner = landmarks[EYE_RIGHT_RIGHT_CORNER]
+
+#     # Calculate eye widths and heights with safe division
+#     def safe_division(a, b, default=0.5):
+#         return a / b if b != 0 else default
+
+#     # Calculate gaze with more robust tracking
+#     left_eye_width = max(left_eye_right_corner.x - left_eye_left_corner.x, 0.01)
+#     left_eye_height = max(left_eye_right_corner.y - left_eye_left_corner.y, 0.01)
+#     right_eye_width = max(right_eye_right_corner.x - right_eye_left_corner.x, 0.01)
+#     right_eye_height = max(right_eye_right_corner.y - right_eye_left_corner.y, 0.01)
+
+#     # Horizontal gaze calculation
+#     left_gaze_x = safe_division(left_iris_center.x - left_eye_left_corner.x, left_eye_width)
+#     right_gaze_x = safe_division(right_iris_center.x - right_eye_left_corner.x, right_eye_width)
+    
+#     # Vertical gaze calculation with explicit coordinate differences
+#     left_gaze_y = safe_division(left_iris_center.y - left_eye_left_corner.y, left_eye_height)
+#     right_gaze_y = safe_division(right_iris_center.y - right_eye_left_corner.y, right_eye_height)
+
+#     # Debug: Print calculated gaze values
+#     if debug:
+#         print(f"Left Gaze - x: {left_gaze_x}, y: {left_gaze_y}")
+#         print(f"Right Gaze - x: {right_gaze_x}, y: {right_gaze_y}")
+
+#     # Average the gaze values from both eyes
+#     gaze_x = (left_gaze_x + right_gaze_x) / 2
+#     gaze_y = (left_gaze_y + right_gaze_y) / 2
+
+#     # Apply vertical bias for top-mounted camera
+#     gaze_y += TOP_CAMERA_VERTICAL_BIAS
+
+#     # Clip values to ensure they remain in a reasonable range
+#     gaze_x = max(0, min(gaze_x, 1))
+#     gaze_y = max(0, min(gaze_y, 1))
+
+#     # Final debug output
+#     if debug:
+#         print(f"Final Gaze - x: {gaze_x}, y: {gaze_y}")
+
+#     return gaze_x, gaze_y
 
 
 def calculate_gaze_variation(gaze_positions_x, gaze_positions_y):
