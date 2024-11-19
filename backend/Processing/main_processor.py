@@ -3,7 +3,7 @@ import mediapipe as mp
 import time
 import numpy as np
 from FaceFeatureExtractor import FaceFeatureExtractor
-from heatmap import GazeHeatmap, process_frame_with_heatmap
+# from heatmap import GazeHeatmap, process_frame_with_heatmap
 # from head_pose_utils import calculate_head_pose
 # from stability_utils import calculate_stability
 # from mouth_utils import calculate_mouth_aspect_ratio  
@@ -39,7 +39,7 @@ face_mesh = mp_face_mesh.FaceMesh(max_num_faces=2,
 # eye_contact_buffer = EyeContactBuffer()
 
 feature_extractor = FaceFeatureExtractor()
-gaze_heatmap = GazeHeatmap(width=300, height=159)
+# gaze_heatmap = GazeHeatmap(width=300, height=159)
 cap = cv2.VideoCapture(0)
 print("\n*\n*\n*\nStarting real-time engagement detection. Press 'q' to quit.\n*\n*\n*\n")
 while cap.isOpened():
