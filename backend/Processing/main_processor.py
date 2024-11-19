@@ -1,20 +1,7 @@
 import cv2
 import mediapipe as mp
-import time
 import numpy as np
 from FaceFeatureExtractor import FaceFeatureExtractor
-# from heatmap import GazeHeatmap, process_frame_with_heatmap
-# from head_pose_utils import calculate_head_pose
-# from stability_utils import calculate_stability
-# from mouth_utils import calculate_mouth_aspect_ratio  
-# from config import MAR_THRESHOLD, BLINK_RATIO_THRESHOLD, LEFT_EYE_POINTS, RIGHT_EYE_POINTS
-# from eyes_utils import (
-#     calculate_gaze_with_iris,
-#     calculate_eye_contact,
-#     calculate_gaze_variation,
-#     calculate_blinking_ratio,
-#     EyeContactBuffer
-# )
 
 # Initialize MediaPipe
 mp_face_mesh = mp.solutions.face_mesh
@@ -23,20 +10,6 @@ face_mesh = mp_face_mesh.FaceMesh(max_num_faces=2,
                                   refine_landmarks=True,
                                   min_detection_confidence=0.5,
                                   min_tracking_confidence=0.5)
-
-# Feature placeholders
-# prev_landmarks = None
-# gaze_positions_x = []  
-# gaze_positions_y = []  # Renamed for clarity with eyes_utils
-# eye_contact_start = None
-# last_head_movement_time = time.time()
-# last_gaze_shift_time = time.time()
-# last_pitch, last_yaw, last_roll = 0, 0, 0
-# last_gaze_x, last_gaze_y = 0, 0
-# yawn_detected_time = None
-
-# Initialize eye contact buffer
-# eye_contact_buffer = EyeContactBuffer()
 
 feature_extractor = FaceFeatureExtractor()
 # gaze_heatmap = GazeHeatmap(width=300, height=159)
