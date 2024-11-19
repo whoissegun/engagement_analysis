@@ -11,7 +11,7 @@ import { div } from "framer-motion/client";
 const team = [
   {
     name: "Khizar Malik",
-    role: "Front End Developer",
+    role: "Frontend Engineer",
     image: khizar,
     social: {
       github: "https://github.com/khizarrm",
@@ -21,19 +21,19 @@ const team = [
   },
   {
     name: "Tendi Sambaza",
-    role: "AI Engineer",
+    role: "CV Engineer",
     image: tendi,
     social: { github: "#", linkedin: "#", twitter: "#" },
   },
   {
     name: "Divine Jojolola",
-    role: "UX Designer",
+    role: "ML Engineer",
     image: divine,
     social: { github: "#", linkedin: "#", twitter: "#" },
   },
   {
     name: "Kuro Gboun",
-    role: "Backend Pipeline",
+    role: "Backend Engineer",
     image: kuro,
     social: { github: "#", linkedin: "#", twitter: "#" },
   },
