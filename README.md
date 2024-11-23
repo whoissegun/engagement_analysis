@@ -15,9 +15,10 @@
 *** See the bottom of this document for the declaration of the reference variables
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
+
 -->
-[![Contributors][contributors-shield]][contributors-url]
-[![MIT License][license-shield]][license-url]
+<!-- [![Contributors][contributors-shield]][contributors-url] -->
+<!-- [![MIT License][license-shield]][license-url] -->
 
 <!-- PROJECT LOGO --> 
 <br /> 
@@ -54,14 +55,16 @@
         <a href="#target-use-cases">Target Use Cases</a>
       </li>
       <li>
-        <a href="#technical-development-plan">Technical Development Plan
-        </a>
-      </li> 
-      <li>
-        <a href="#mediapipe-important-landmarks">MediaPipe Important Landmarks
+        <a href="#mediapipe-landmarks">MediaPipe Landmarks
         </a>
       </li>
-       <li><a href="#key-algorithms">Key Algorithms</a></li> 
+      <li>
+        <a href="#key-algorithms">Key Algorithms</a>
+      </li> 
+      <li>
+        <a href="#machine-learning-overview">Machine Learning Overview
+        </a>
+      </li>
       <li>
         <a href="#challenges-and-mitigation">Challenges and Mitigation</a>
       </li> 
@@ -149,72 +152,8 @@ Lokdin offers solutions tailored to the needs of various industries:
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-<!-- TECHNICAL DEVELOPMENT PLAN -->
-## Technical Development Plan
-
-Lokdin employs a combination of pre-trained models, feature engineering, and real-world data to deliver accurate and actionable engagement insights.
-
-### Model Development
-
-Lokdin's model development employs a custom-built deep learning architecture trained on synthetic datasets tailored to the project's engagement detection requirements.
-
-- **Base Model Creation**: 
-  The model is designed from scratch, optimized specifically for engagement classification. By utilizing synthetic datasets, it overcomes the challenges of limited public datasets for niche applications like engagement analysis. These datasets simulate diverse scenarios, including virtual classrooms, driving, and telehealth sessions, ensuring robustness across use cases.
-
-- **Feature Extraction**: 
-  The custom model extracts and analyzes:
-  - **Core Features**: Facial expressions, gaze tracking, head movements, and posture.
-  - **Use Case-Specific Features**:
-    - **Drivers**: Eye gaze, yawning detection using the Mouth Aspect Ratio (MAR), drooping eyelids.
-    - **Students**: Interaction with screen/material, posture dynamics.
-    - **Healthcare**: Emotional cues, differentiating between passive and active engagement.
-
-- **Output Classes**:
-  - **Binary Classification**: The model determines if a subject is "Engaged" or "Not Engaged."
-  - **Multi-Class Outputs**: Provides detailed engagement levels like "Highly Engaged," "Moderately Engaged," and context-aware classes such as "Drowsy" for drivers or "Confused" for students.
-
-### Data Structure Sent to the Model
-
-The extracted engagement metrics are encapsulated within the `FaceFeatures` data class, which is passed to the model for analysis:
-
-```python
-@dataclass
-class FaceFeatures:
-    head_pitch: float  # Vertical head movement
-    head_yaw: float  # Horizontal head movement
-    head_roll: float  # Rotational head movement
-    gaze_x: float  # Horizontal gaze position
-    gaze_y: float  # Vertical gaze position
-    eye_contact_duration: float  # Time spent maintaining eye contact
-    gaze_variation_x: float  # Gaze variability in horizontal direction
-    gaze_variation_y: float  # Gaze variability in vertical direction
-    face_confidence: float  # Confidence score of face detection
-    landmarks_stability: float  # Stability of face landmarks
-    time_since_head_movement: float  # Time since last significant head movement
-    time_since_gaze_shift: float  # Time since last significant gaze shift
-    mar: float  # Mouth Aspect Ratio, used for yawning detection
-    blink_ratio: float  # Blink ratio for detecting blinks
-    is_blinking: bool  # Boolean flag for blink detection
-    is_focused: bool  # Boolean flag for determining focus
-    distraction_duration: float  # Duration of distraction
-    eye_contact_detected: bool  # Boolean flag for detecting eye contact
-    yawn_detected: bool  # Boolean flag for detecting yawns
-```
-
-### Data Pipeline
-
-- **Data Capture**: Uses OpenCV and MediaPipe for frame analysis.
-- **Storage**: Granular storage options with anonymization protocols.
-
-### Training and Optimization
-
-- Incorporates synthetic and real-world datasets.
-- Adapts a multitask learning approach for cross-domain generalization.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 <!-- IMPORTANT LANDMARKS -->
-## Mediapipe Important Landmarks
+## Mediapipe Landmarks
 
 Lokdin leverages MediaPipe's **Facial Landmark Detection** model to analyze engagement-related features in real-time. The model detects 468 unique landmarks on the face, which are used for calculating various metrics such as head pose, gaze, and mouth aspect ratio.
 
@@ -248,6 +187,249 @@ This visualization helps illustrate how these landmarks are mapped onto a user's
 <br>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- KEY ALGORITHMS -->
+## Key Algorithms
+
+Lokdin utilizes a variety of custom algorithms to calculate engagement metrics in real time. Below are the key algorithms implemented:
+
+### Gaze Calculation with Iris Detection
+
+**Function**: `calculate_gaze_with_iris`  
+This function calculates gaze direction based on iris position relative to the boundaries of the eyes.  
+
+- **Inputs**:  
+  - Landmarks from MediaPipe's face detection.  
+  - Frame dimensions for scaling.  
+
+- **Outputs**:  
+  - Horizontal (`gaze_x`) and vertical (`gaze_y`) normalized gaze coordinates.  
+
+- **Details**:  
+  - Compensates for camera placement biases (e.g., top, center, bottom).  
+  - Applies thresholds to map gaze to a normalized range of `[0, 1]`.
+
+---
+
+### Gaze Variation
+
+**Function**: `calculate_gaze_variation`  
+This function calculates variations in gaze direction over a buffer of recent gaze points.
+
+- **Inputs**:  
+  - Buffers of gaze positions (`gaze_positions_x`, `gaze_positions_y`).  
+
+- **Outputs**:  
+  - Standard deviations in horizontal and vertical gaze directions.  
+
+---
+
+### Eye Contact Detection
+
+**Function**: `calculate_eye_contact`  
+Determines whether the user is maintaining eye contact with the screen.
+
+- **Inputs**:  
+  - Gaze coordinates (`gaze_x`, `gaze_y`).  
+  - Configurable thresholds for horizontal and vertical deviation.  
+
+- **Outputs**:  
+  - Boolean indicating if the user is maintaining eye contact.  
+
+---
+
+### Blink Detection
+
+**Function**: `calculate_blinking_ratio`  
+Calculates the blinking ratio based on the aspect ratio of the eyes.
+
+- **Inputs**:  
+  - Eye landmarks (e.g., `LEFT_EYE_POINTS`, `RIGHT_EYE_POINTS`).  
+
+- **Outputs**:  
+  - Blinking ratio.  
+
+- **Details**:  
+  - Compares eye width to height to determine if a blink occurred.  
+
+---
+
+### Head Pose Estimation
+
+**Function**: `calculate_head_pose`  
+Estimates head pose using 3D-2D mapping of facial landmarks.
+
+- **Inputs**:  
+  - Landmarks and frame dimensions.  
+
+- **Outputs**:  
+  - Head pitch, yaw, and roll (degrees).  
+
+- **Details**:  
+  - Normalizes angles for intuitive vertical, horizontal, and tilt movements.  
+
+---
+
+### Yawning Detection
+
+**Function**: `calculate_mouth_aspect_ratio`  
+Detects yawning based on the Mouth Aspect Ratio (MAR).
+
+- **Inputs**:  
+  - Lip landmarks and frame dimensions.  
+
+- **Outputs**:  
+  - MAR score.  
+
+- **Details**:  
+  - Compares vertical lip distances to horizontal mouth width.  
+
+---
+
+### Stability Calculation
+
+**Function**: `calculate_stability`  
+Measures the stability of facial landmarks across consecutive frames.
+
+- **Inputs**:  
+  - Current and previous landmarks.  
+  - Frame dimensions.  
+
+- **Outputs**:  
+  - Stability score between `0` and `1`.  
+
+---
+
+### Event Timing
+
+**Function**: `time_since_last_event`  
+Tracks the time elapsed since a given event (e.g., head movement or gaze shift).
+
+- **Inputs**:  
+  - Timestamp of the last event.  
+
+- **Outputs**:  
+  - Time elapsed (seconds).  
+
+---
+
+### Eye Contact Buffer
+
+**Class**: `EyeContactBuffer`  
+Tracks eye contact and distraction durations.
+
+- **Methods**:  
+  - `update_eye_contact`: Updates eye contact status and durations.  
+
+- **Outputs**:  
+  - Boolean indicating if eye contact is detected.  
+  - Eye contact and distraction durations.  
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+<!-- MACHINE LEARNING OVERVIEW -->
+## Machine Learning Overview
+
+Lokdin leverages a custom-built machine learning model for real-time engagement detection, designed to provide accurate predictions across various engagement levels: **Low**, **Medium**, and **High**. Below is an overview of the development process:
+
+### Problem Statement
+
+Lokdin tackles the challenge of predicting user engagement levels based on facial and gaze-based features. By analyzing behavioral and facial input data, Lokdin offers actionable insights tailored to diverse domains, including education, driving, and telehealth.
+
+### Dataset Generation
+
+To address the scarcity of engagement datasets, Lokdin uses a synthetic dataset simulating real-world engagement scenarios. The dataset includes:
+
+- **Head Pose**: Pitch, yaw, and roll representing head orientation.
+- **Gaze Coordinates**: Horizontal and vertical gaze positions (X, Y).
+- **Eye Contact Duration**: Measuring how long a user maintains eye contact.
+- **Gaze Variation**: Quantifying deviations in gaze direction over time.
+- **Facial Confidence**: A measure of facial recognition confidence.
+- **Landmark Stability**: Evaluating the consistency of facial landmarks.
+- **Time Metrics**: Time since the last head movement or gaze shift.
+
+The dataset was balanced to mitigate class imbalance and ensure equal representation across all engagement levels.
+
+### Model Architecture
+
+Lokdin employs a custom neural network architecture, developed with **PyTorch**, to classify engagement levels. The model’s architecture includes:
+
+- **Input Layer**:
+  - Features are normalized using **batch normalization** to enhance training stability.
+
+- **Hidden Layers**:
+  - Two fully connected layers with:
+    - **Batch Normalization**: Ensures consistent feature scaling.
+    - **LeakyReLU Activation**: Handles negative feature values effectively.
+    - **Dropout Regularization**: Reduces overfitting with a 30% dropout rate.
+
+- **Output Layer**:
+  - A softmax activation function predicts the probability distribution across the engagement classes (**Low**, **Medium**, **High**).
+
+**Key Features**:
+- **Weight Initialization**: Kaiming Normal initialization ensures proper scaling.
+- **Dropout**: Enhances generalization by mitigating overfitting.
+
+### Training Pipeline
+
+Lokdin’s training process is optimized for performance and efficiency:
+
+- **Loss Function**: 
+  - Cross-entropy loss, tailored for multi-class classification problems.
+- **Optimizer**: 
+  - AdamW optimizer with weight decay for efficient convergence.
+- **Learning Rate Scheduler**: 
+  - ReduceLROnPlateau dynamically adjusts the learning rate based on validation accuracy.
+- **Gradient Clipping**: 
+  - Caps gradients to a maximum norm of 1.0 to prevent exploding gradients.
+
+### Training Process
+
+Lokdin’s training and validation processes included:
+
+- **Batch Processing**: 
+  - Data is processed in batches for memory efficiency.
+- **Early Stopping**: 
+  - Training halts after 5 consecutive epochs without improvement to prevent overfitting.
+- **Performance Monitoring**: 
+  - Accuracy and loss are logged across epochs for both training and validation phases.
+
+### Results
+
+The model achieved high validation accuracy, ensuring robust performance across diverse scenarios. The best-performing model, determined during training, is deployed for real-time engagement detection.
+
+### Data Structure Sent to the Model
+
+Lokdin encapsulates extracted engagement metrics within a structured `FaceFeatures` data class. These features are used as inputs to the machine learning model:
+
+```python
+@dataclass
+class FaceFeatures:
+    head_pitch: float  # Vertical head movement
+    head_yaw: float  # Horizontal head movement
+    head_roll: float  # Rotational head movement
+    gaze_x: float  # Horizontal gaze position
+    gaze_y: float  # Vertical gaze position
+    eye_contact_duration: float  # Time spent maintaining eye contact
+    gaze_variation_x: float  # Gaze variability in horizontal direction
+    gaze_variation_y: float  # Gaze variability in vertical direction
+    face_confidence: float  # Confidence score of face detection
+    landmarks_stability: float  # Stability of face landmarks
+    time_since_head_movement: float  # Time since last significant head movement
+    time_since_gaze_shift: float  # Time since last significant gaze shift
+    mar: float  # Mouth Aspect Ratio, used for yawning detection
+    blink_ratio: float  # Blink ratio for detecting blinks
+    is_blinking: bool  # Boolean flag for blink detection
+    is_focused: bool  # Boolean flag for determining focus
+    distraction_duration: float  # Duration of distraction
+    eye_contact_detected: bool  # Boolean flag for detecting eye contact
+    yawn_detected: bool  # Boolean flag for detecting yawns
+  ```
+
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 
 
 <!-- CHALLENGES AND MITIGATION -->
