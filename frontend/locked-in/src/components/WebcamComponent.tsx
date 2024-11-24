@@ -1,10 +1,8 @@
-import React, { useCallback, useRef, useState } from 'react';
-import Webcam from 'react-webcam';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, CameraOff } from 'lucide-react';
 
 const WebcamComponent = () => {
-  const webcamRef = useRef<Webcam>(null);
   const [isEnabled, setIsEnabled] = useState(false);
 
   const handleToggleWebcam = useCallback(() => {
@@ -15,22 +13,28 @@ const WebcamComponent = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto px-4 py-8"
+      //need css here
+      className="h-screen w-screen object-cover rounded-2xl max-w-4xl mx-auto px-4 py-8"
     >
-      <div className={`relative rounded-2xl overflow-hidden bg-card-bg backdrop-blur-sm border border-card-border transition-all duration-300 ${isEnabled ? 'camera-glow' : ''}`}>
+      <div
+        className={`relative rounded-2xl overflow-hidden bg-card-bg backdrop-blur-sm border border-card-border transition-all duration-300 ${isEnabled ? 'camera-glow' : ''
+          }`}
+      >
         {isEnabled ? (
-          <Webcam
-            ref={webcamRef}
-            audio={false}
-            screenshotFormat="image/jpeg"
-            className="w-full aspect-video object-cover rounded-2xl"
-          />
+          // Window of facial scanning
+          <div className="w-full aspect-video object-cover rounded-2xl">
+            <img
+              src="http://127.0.0.1:5801/video_feed"
+              alt="Live Stream"
+              style={{ width: '100%', maxWidth: '640px', height: 'auto' }}
+            />
+          </div>
         ) : (
           <div className="w-full aspect-video bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
             <p className="text-secondary">Camera disabled</p>
           </div>
         )}
-        
+
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -61,5 +65,4 @@ const WebcamComponent = () => {
     </motion.div>
   );
 };
-
 export default WebcamComponent;

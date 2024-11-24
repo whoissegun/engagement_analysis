@@ -1,7 +1,18 @@
+from flask import Flask, render_template, Response
+import socket
+import pickle
 import cv2
 import mediapipe as mp
 import numpy as np
 from FaceFeatureExtractor import FaceFeatureExtractor
+app = Flask(__name__)
+
+
+server_ip = "127.0.0.1"  # Replace with the receiver's IP
+server_port = 6666       # Port number for sending frames
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1000000)
+
 
 # Initialize MediaPipe
 mp_face_mesh = mp.solutions.face_mesh
@@ -14,6 +25,7 @@ face_mesh = mp_face_mesh.FaceMesh(max_num_faces=2,
 feature_extractor = FaceFeatureExtractor()
 # gaze_heatmap = GazeHeatmap(width=300, height=159)
 cap = cv2.VideoCapture(0)
+
 print("\n*\n*\n*\nStarting real-time engagement detection. Press 'q' to quit.\n*\n*\n*\n")
 while cap.isOpened():
     ret, frame = cap.read()
@@ -24,7 +36,7 @@ while cap.isOpened():
     frame = cv2.flip(frame, 1)
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results = face_mesh.process(frame_rgb)
-
+    
     # heatmap_image = process_frame_with_heatmap(frame, gaze_heatmap)
 
     if results.multi_face_landmarks:
@@ -123,13 +135,23 @@ while cap.isOpened():
                 # Draw the text
                 cv2.putText(frame, text, (text_x, text_y), font, font_scale, color, thickness)
 
+
     # Display the frame
     cv2.imshow("Lock'dIn Processor", frame)
+    #if ur laptop is fast increase num at the end
+    success, compressed_frame = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 65])
+    if success:
+        # Serialize the compressed frame
+        data = pickle.dumps(compressed_frame)
+
+        # Send the serialized frame over the socket
+        s.sendto(data, (server_ip, server_port))
+    else:
+        print("Failed to compress the frame.")
+
     # cv2.imshow("Screen Gaze Heatmap", heatmap_image)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 cap.release()
 cv2.destroyAllWindows()
-
-
