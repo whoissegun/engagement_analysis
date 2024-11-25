@@ -16,12 +16,8 @@ mediapipe_cache/
 mediapipe_graphs/
 
 # Images and videos (if generated during testing)
-*.jpg
-*.jpeg
-*.png
 *.mp4
 *.avi
-*.mov
 
 # Logs and debug files
 *.log

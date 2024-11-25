@@ -182,7 +182,7 @@ To better understand the positioning of these landmarks, refer to the following 
 
 <div align="center"> 
   <a href="https://mediapipe-studio.webapps.google.com/home"> 
-    <img src="assets/landmarks.png" alt="FaceMesh" width="600"> 
+    <img src="assets/landmarks.png" alt="FaceMesh" width="500"> 
   </a> 
 </div>
 
