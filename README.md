@@ -180,7 +180,11 @@ Below are the key landmarks utilized in Lokdin:
 ### Visualization
 To better understand the positioning of these landmarks, refer to the following annotated image showing all 468 landmarks from MediaPipe's facial detection model:
 
-![Facial Landmarks Image](assets/landmarks.jpg)
+<div align="center"> 
+  <a href="https://mediapipe-studio.webapps.google.com/home"> 
+    <img src="assets/landmarks.png" alt="FaceMesh" width="600"> 
+  </a> 
+</div>
 
 This visualization helps illustrate how these landmarks are mapped onto a user's face for real-time engagement analysis. 
 
@@ -503,13 +507,13 @@ Ensure you have the following installed:
 ### Live Demo
 Click the image below for a live demo of Lokdin in action:
 <a href="https://github.com/whoissegun/engagement_analysis"> 
-    <img src="assets/DEMO.GIF" alt="Live Demo" width="10000"> 
+    <img src="assets/DEMO.GIF" alt="Live Demo" width="800"> 
 </a>
 
 ### Visualization and Heatmap
 Lokdin includes a heatmap feature to provide a comprehensive visualization of engagement metrics over time. Click the image below to view the heatmap in action:
 <a href="https://github.com/whoissegun/engagement_analysis"> 
-    <img src="assets/Heatmap DEMO.GIF" alt="Heatmap Visualization" width="400"> 
+    <img src="assets/HeatmapDEMO.GIF" alt="Heatmap Visualization" width="400"> 
 </a>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
